@@ -1,3 +1,7 @@
+# TODO: Squares are not moving on an equal grid so they can move very easily
+#       and get off aligned so to make it impossible to collide.
+
+
 import pygame, sys, random, util
 from pygame.locals import *
 
@@ -16,22 +20,22 @@ black = pygame.Color(0, 0, 0)
 purple = pygame.Color(83, 15, 119)
 
 # Font
-font = pygame.font.SysFont('helvetica', 32)
-lose_msg = "Game Over."
+font = pygame.font.Font('Fishfingers.ttf', 40)
+lose_msg = font.render("Game Over.", True, black)
 score = 0
 
 
 # Shapes
-body_rect = Rect(50, 50, 15, 15)
+body_rect = Rect(50, 50, 30, 30)
 
 f_width = random.randrange(0, 641)
 f_top = random.randrange(0 , 481)
-food_rect = Rect(f_width, f_top, 15, 15)
+food_rect = Rect(f_width, f_top, 30, 30)
 
 # Speed of snake
-slow = 1
-faster = 2
-fastest = 3
+slow = .5
+faster = 1
+fastest = 1.5
 
 # Inital Direction
 side = 'left'
@@ -69,8 +73,13 @@ while True:
                 side = 'left'
                 direction = 1
 
-    if body_rect.colliderect(food_rect):
+    # TODO: Squares are not lining up
+    if body_rect.contains(food_rect):
         score += 1
+
+    # TODO: This should detect with it hits, not if it's out of it.
+    if not screen_rect.contains(body_rect):
+        screen.blit(lose_msg, (180, 180))
 
     pygame.display.update()
     fps_clock.tick(30)
