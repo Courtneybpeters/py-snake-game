@@ -2,7 +2,7 @@
 #       and get off aligned so to make it impossible to collide.
 
 
-import pygame, sys, random, util
+import pygame, sys, random
 from pygame.locals import *
 
 pygame.init()
@@ -17,69 +17,114 @@ fps_clock = pygame.time.Clock()
 # Colors
 green = pygame.Color(55, 186, 35)
 black = pygame.Color(0, 0, 0)
+white = pygame.Color(255, 255, 255)
 purple = pygame.Color(83, 15, 119)
 
 # Font
 font = pygame.font.Font('Fishfingers.ttf', 40)
+title_font = pygame.font.Font('Fishfingers.ttf', 80)
 lose_msg = font.render("Game Over.", True, black)
+new_msg = font.render("New Game", True, white)
+title = title_font.render('Py-Snake', True, black)
 score = 0
 
+# Speed of snake
+slow = 4
+faster = 10
+fastest = 20
+
+# Testing purposes
+CHOSEN_SPEED = faster
+
+# Generate food
+def new_food():
+    food_left = random.randrange(0, 641 - 40, 40)
+    food_top = random.randrange(0 , 481 - 40, 40)
+    food_rect = Rect(food_left, food_top, 40, 40)
+    return food_rect
 
 # Shapes
-body_rect = Rect(50, 50, 30, 30)
+body_rect = Rect(50, 50, 40, 40)
+food = new_food()
 
-f_width = random.randrange(0, 641)
-f_top = random.randrange(0 , 481)
-food_rect = Rect(f_width, f_top, 30, 30)
+# Buttons
+new_game = Rect(200, 200, 150, 50)
+new_game.left = screen_center[0] - 50
+new_game.top = screen_center[1] + 50
+#
+#start_game = Rect(200, 200, 150, 50)
+#start_game.center = screen_center
 
-# Speed of snake
-slow = .5
-faster = 1
-fastest = 1.5
+# Move function
+def move(rect, speed, direction):
+    rect.left += speed * direction[0]
+    rect.top += speed * direction[1]
 
-# Inital Direction
-side = 'left'
-direction = 1
+# Inital location and direction
+location = body_rect.left, body_rect.top
+direction = (1,0)
+started = False
+
+# State
+state = 'start menu'
+
 
 while True:
+    
+    if state == 'in game':
 
-    screen.fill(green)
-
-    score_msg = font.render((str(score)), False, black)
-    screen.blit(score_msg, (0, 0))
-
-    pygame.draw.rect(screen, black, body_rect)
-    pygame.draw.rect(screen, purple, food_rect)
-
-    util.move(body_rect, fastest, side, direction)
+        screen.fill(green)
+    
+        score_msg = font.render((str(score)), False, black)
+        screen.blit(score_msg, (0, 0))
+    
+        pygame.draw.rect(screen, black, body_rect)
+        pygame.draw.rect(screen, purple, food)
+    
+        move(body_rect, CHOSEN_SPEED, direction)
+        
+        # Food collision check
+        if body_rect.contains(food):
+            score += 1
+            food = new_food()
+        
+        # Wall collision check
+        if not screen_rect.contains(body_rect):
+            state = 'game over'
+      
+    if state == 'game over':
+        screen.fill(green)
+        screen.blit(lose_msg, (200, 200))
+        pygame.draw.rect(screen, black, new_game) 
+        screen.blit(new_msg, (new_game.left + 10, new_game.top + 10))
+        
+    if state == 'start menu':
+        screen.fill(green)
+        screen.blit(title, (screen_center[0] - 10, screen_center[1] - 10))
+        pygame.draw.rect(screen, black, new_game) 
+        screen.blit(new_msg, (new_game.left + 10, new_game.top + 10))     
 
     for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
+            
+        elif event.type == MOUSEBUTTONDOWN:
+            click = pygame.mouse.get_pos()
+            
+            if new_game.collidepoint(click):
+                state = 'in game'
 
         elif event.type == KEYDOWN:
-            starting = False
+            started = False
             if event.key == K_DOWN:
-                side = 'top'
-                direction = 1
+                direction = (0,1)
             elif event.key == K_UP:
-                side = 'top'
-                direction = 0
+                direction = (0,-1)
             elif event.key == K_LEFT:
-                side = 'left'
-                direction = 0
+                direction = (-1,0)
             elif event.key == K_RIGHT:
-                side = 'left'
-                direction = 1
-
-    # TODO: Squares are not lining up
-    if body_rect.contains(food_rect):
-        score += 1
-
-    # TODO: This should detect with it hits, not if it's out of it.
-    if not screen_rect.contains(body_rect):
-        screen.blit(lose_msg, (180, 180))
+                direction = (1,0)          
 
     pygame.display.update()
-    fps_clock.tick(30)
+    fps_clock.tick(CHOSEN_SPEED)
